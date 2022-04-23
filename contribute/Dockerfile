@@ -6,7 +6,7 @@ ENV UID="1000" \
   GID="1000" \
   UNAME="wizard" \
   GNAME="wizard" \
-  SHELL="/bin/sh" \
+  SHELL="/bin/bash" \
   WORKSPACE="" \
   NVIM_CONFIG="/home/wizard/.config/nvim" \
   PATH="/home/wizard/.local/bin:${PATH}"
@@ -15,34 +15,35 @@ ENV UID="1000" \
 RUN pacman -Syy
 
 # Install Neovim
-RUN pacman -Sy neovim --noconfirm
+RUN pacman -S neovim --noconfirm
 
 # Install runtime dependencies
-RUN pacman -Sy ripgrep nodejs-lts-gallium npm git bash gcc jq --noconfirm
+RUN pacman -S ripgrep git gcc jq xclip --noconfirm
 
 # Install required dependencies for LSP Installer
-RUN pacman -Sy wget unzip --noconfirm
+RUN pacman -S wget unzip --noconfirm
 
-RUN groupadd wizard
-RUN useradd -m -g wizard wizard
+# Install nodejs LTS 16.14.x 
+RUN pacman -S nodejs-lts-gallium npm --noconfirm
 
 RUN mkdir /usr/local/lib/node_modules
 RUN chown -R ${UNAME}:${GNAME} /usr/local/lib/node_modules/
 
-RUN npm i -g chokidar-cli
+# Create group and user wizard
+RUN groupadd -g ${GID} wizard
+RUN useradd -u ${UID} -m -g wizard wizard
 
 USER wizard
 WORKDIR /home/wizard
 
-COPY _docker_entry.sh /usr/local/bin/
+COPY _entrypoint.sh /usr/local/bin/
 
-# Wizard-nvim
+# Nvim configs
 VOLUME "~/.config/nvim"
-# For storing packer plugins
+# Packer plugins store 
 VOLUME "~/.local/share/nvim"
-# Files and projects for testing on disk
+# Personal files to test
 VOLUME "~/workspace"
 
-
-ENTRYPOINT ["sh", "/usr/local/bin/_docker_entry.sh"]
+ENTRYPOINT ["sh", "/usr/local/bin/_entrypoint.sh"]
 
